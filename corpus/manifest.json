@@ -1,0 +1,47 @@
+[
+    {
+        "filename":  "oem_manual.pdf",
+        "type":  "oem_manual",
+        "url":  "https://www.gouldspumps.com/getmedia/55ac1650-1d52-4361-a8ec-74f72ff1e554/IOM_3405-3406-3416.pdf",
+        "sha256":  "5040067a2680d31791cdf05dfd3b9d66a8f9986c5843b6bd2c2fffe58a9c1dbe",
+        "synthetic":  false,
+        "verification_status":  "passed",
+        "notes":  "Troubleshooting table verified"
+    },
+    {
+        "filename":  "bearing_vibration.pdf",
+        "type":  "bearing_vibration_guide",
+        "url":  "https://www.schaeffler.com/remotemedien/media/_shared_media/08_media_library/01_publications/schaeffler_2/technicalpaper_1/download_1/vibration_analysis_en_en.pdf",
+        "sha256":  "42092fc106a1d9c7bd957946c6d74e64a78e8dfe05aef13a73335765bf4ed6fc",
+        "synthetic":  false,
+        "verification_status":  "passed",
+        "notes":  "Bearing vibration analysis content verified"
+    },
+    {
+        "filename":  "lubrication_sop.pdf",
+        "type":  "lubrication_sop",
+        "url":  "https://www.mobil.com/lubricants/-/media/files/global/us/industrial/jsa-and-sop/lube-instructions-sop.docx",
+        "sha256":  "841e5c56449688579368cf4271e82fbb9cfdbff2680eacb90b8377ef5c363875",
+        "synthetic":  false,
+        "verification_status":  "passed",
+        "notes":  "PDF converted from source DOCX; general lubrication instruction workflow"
+    },
+    {
+        "filename":  "Synthetic_Inspection_Report.pdf",
+        "type":  "inspection_report",
+        "url":  null,
+        "sha256":  "a016505896227dea4ab8c76b2174a1c66d850e6802b27a2a40c0b81204dd77a3",
+        "synthetic":  true,
+        "verification_status":  "passed",
+        "notes":  "Fictional report created for software testing"
+    },
+    {
+        "filename":  "osha_lockout_tagout.pdf",
+        "type":  "safety_lockout_tagout",
+        "url":  "https://www.osha.gov/sites/default/files/publications/OSHA3120.pdf",
+        "sha256":  "2e8a61dfb5bb68c38c1bb75f5b438f4f03400b5398718a20f33438516279c31c",
+        "synthetic":  false,
+        "verification_status":  "passed",
+        "notes":  "OSHA 3120, revised 2002; text extraction verified"
+    }
+]

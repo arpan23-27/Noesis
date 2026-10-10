@@ -24,7 +24,8 @@
         "sha256":  "841e5c56449688579368cf4271e82fbb9cfdbff2680eacb90b8377ef5c363875",
         "synthetic":  false,
         "verification_status":  "passed",
-        "notes":  "PDF converted from source DOCX; general lubrication instruction workflow"
+        "notes":  "PDF converted from source DOCX; general lubrication instruction workflow",
+        "conversion":  "Converted from the original Mobil DOCX to PDF. SHA-256 identifies the local converted PDF."
     },
     {
         "filename":  "Synthetic_Inspection_Report.pdf",

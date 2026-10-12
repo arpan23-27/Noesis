@@ -1,4 +1,5 @@
 from noesis.ingest.tagging import persist_chunk_tags
+from noesis.ingest.chunking import DEFAULT_CHILD_SIZE, DEFAULT_OVERLAP, DEFAULT_PARENT_SIZE
 """Idempotent PDF ingestion and SQLite persistence."""
 
 import hashlib
@@ -97,9 +98,9 @@ def ingest_pdf(
     doc_type: str = "oem_manual",
     source_class: str = "APPROVED_DOC",
     parse_version: str = DEFAULT_PARSE_VERSION,
-    parent_size: int = 1200,
-    child_size: int = 400,
-    overlap: int = 60,
+    parent_size: int = DEFAULT_PARENT_SIZE,
+    child_size: int = DEFAULT_CHILD_SIZE,
+    overlap: int = DEFAULT_OVERLAP,
 ) -> dict[str, Any]:
     """Ingest a PDF, skipping unchanged documents.
 

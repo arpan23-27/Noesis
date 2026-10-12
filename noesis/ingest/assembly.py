@@ -1,10 +1,18 @@
-import re
-
-import pymupdf
 """Assemble ordinary content, warnings, and tables into retrieval chunks."""
 
+import re
 from pathlib import Path
 
+import pymupdf
+
+from noesis.ingest.chunking import (
+    DEFAULT_CHILD_SIZE,
+    DEFAULT_OVERLAP,
+    DEFAULT_PARENT_SIZE,
+    Chunk,
+    approx_tokens,
+    chunk_lines,
+)
 from noesis.ingest.chunking import Chunk, chunk_lines
 from noesis.ingest.pdf import extract_pdf
 from noesis.ingest.sections import SectionLine, detect_sections
@@ -62,9 +70,9 @@ def _table_section(
 def assemble_document(
     pdf_path: str | Path,
     *,
-    parent_size: int = 1200,
-    child_size: int = 400,
-    overlap: int = 60,
+    parent_size: int = DEFAULT_PARENT_SIZE,
+    child_size: int = DEFAULT_CHILD_SIZE,
+    overlap: int = DEFAULT_OVERLAP,
     source_class: str = "APPROVED_DOC",
 ) -> list[Chunk]:
     """Extract and assemble a PDF into content, warning, and table chunks.
@@ -157,9 +165,10 @@ def assemble_document(
     # Add each warning as a standalone typed chunk.
     for index, warning in enumerate(warnings, start=1):
         section = warning["section_path"]
+        text = f'{warning["label"]}: {warning["text"]}'
 
         chunks.append(
-            {
+               {
                 "chunk_key": f"warning-{index}",
                 "parent_chunk_key": None,
                 "page_start": warning["page_start"],
@@ -168,14 +177,11 @@ def assemble_document(
                 "heading_level": None,
                 "chunk_role": "warning",
                 "table_id": None,
-                "text": f'{warning["label"]}: {warning["text"]}',
-                "text_for_embedding": (
-                    f"Section: {section}\n"
-                    f'{warning["label"]}: {warning["text"]}'
-                ),
+                "text": text,
+                "text_for_embedding": f"Section: {section}\n{text}",
                 "char_start": warning["char_start"],
                 "char_end": warning["char_end"],
-                "token_count": None,
+                "token_count": approx_tokens(text),
                 "safety_scope": warning["safety_scope"],
                 "source_class": source_class,
             }
@@ -210,7 +216,7 @@ def assemble_document(
                 ),
                 "char_start": None,
                 "char_end": None,
-                "token_count": None,
+                "token_count": approx_tokens(table_text),
                 "safety_scope": None,
                 "source_class": source_class,
             }

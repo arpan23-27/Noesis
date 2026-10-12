@@ -1,9 +1,31 @@
-
 """Create section-aware parent and child chunks from extracted PDF lines."""
 
+import re
 from typing import TypedDict
 
 from noesis.ingest.sections import SectionLine
+
+# Token counts are approximate: one token is taken to be four characters, the
+# usual rule of thumb for English text. Sizes are applied in characters so
+# splitting needs no tokenizer. Budgets follow the roadmap: children of
+# 200-300 tokens, parents of 800-1200.
+CHARS_PER_TOKEN = 4
+CHILD_TOKENS = 250
+PARENT_TOKENS = 1000
+OVERLAP_TOKENS = 40
+
+DEFAULT_CHILD_SIZE = CHILD_TOKENS * CHARS_PER_TOKEN      # 1000 characters
+DEFAULT_PARENT_SIZE = PARENT_TOKENS * CHARS_PER_TOKEN    # 4000 characters
+DEFAULT_OVERLAP = OVERLAP_TOKENS * CHARS_PER_TOKEN       # 160 characters
+
+# A sentence ends at . ! or ? (plus optional closing bracket or quote)
+# followed by whitespace.
+_SENTENCE_END = re.compile(r"[.!?][)\]\"']*\s")
+
+
+def approx_tokens(text: str) -> int:
+    """Approximate token count: characters / 4, never below 1."""
+    return max(1, round(len(text) / CHARS_PER_TOKEN))
 
 
 class Chunk(TypedDict):
@@ -24,12 +46,43 @@ class Chunk(TypedDict):
     source_class: str
 
 
+def _cut_point(text: str, start: int, end: int, minimum: int) -> int:
+    """Choose where a chunk that may run up to `end` should stop.
+
+    Prefer the last sentence end, then the last line break, then the last
+    space, without leaving the chunk shorter than `minimum` characters when
+    a later boundary exists.
+    """
+    floor = start + minimum
+    cut = -1
+
+    for match in _SENTENCE_END.finditer(text, start, end):
+        if match.end() >= floor:
+            cut = match.end()
+
+    if cut != -1:
+        return cut
+
+    for separator in ("\n", " "):
+        boundary = text.rfind(separator, floor, end)
+        if boundary != -1:
+            return boundary
+
+    boundary = text.rfind(" ", start, end)
+    return boundary if boundary > start else end
+
+
 def _split_text(
     text: str,
     target_size: int,
     overlap: int,
 ) -> list[tuple[int, int]]:
-    """Return non-empty text ranges, preferring word boundaries."""
+    """Return non-empty text ranges of at most `target_size` characters.
+
+    Ranges end at sentence boundaries where possible. Each range after the
+    first begins up to `overlap` characters before the previous one ended,
+    at a sentence start if one falls in that window, else at a word start.
+    """
     if target_size <= 0:
         raise ValueError("target_size must be positive")
     if overlap < 0 or overlap >= target_size:
@@ -42,9 +95,7 @@ def _split_text(
         end = min(start + target_size, len(text))
 
         if end < len(text):
-            boundary = text.rfind(" ", start, end)
-            if boundary > start:
-                end = boundary
+            end = _cut_point(text, start, end, target_size // 2)
 
         if end <= start:
             end = min(start + target_size, len(text))
@@ -56,15 +107,18 @@ def _split_text(
 
         next_start = max(start + 1, end - overlap)
 
-        # Avoid starting the next chunk in the middle of a word.
-        space = text.find(" ", next_start, end)
-        if space != -1:
-            next_start = space + 1
+        if overlap:
+            sentence = _SENTENCE_END.search(text, next_start, end)
+            if sentence:
+                next_start = sentence.end()
+            else:
+                space = text.find(" ", next_start, end)
+                if space != -1:
+                    next_start = space + 1
 
         start = next_start
 
     return ranges
-
 
 
 def _source_offsets(
@@ -126,9 +180,9 @@ def _source_offsets(
 def chunk_lines(
     lines: list[SectionLine],
     *,
-    parent_size: int = 1200,
-    child_size: int = 400,
-    overlap: int = 60,
+    parent_size: int = DEFAULT_PARENT_SIZE,
+    child_size: int = DEFAULT_CHILD_SIZE,
+    overlap: int = DEFAULT_OVERLAP,
     source_class: str = "APPROVED_DOC",
 ) -> list[Chunk]:
     """Build parent chunks and their child retrieval chunks.
@@ -227,7 +281,7 @@ def chunk_lines(
                     ),
                     "char_start": parent_start_offset,
                     "char_end": parent_end_offset,
-                    "token_count": None,
+                    "token_count": approx_tokens(parent_text),
                     "safety_scope": None,
                     "source_class": source_class,
                 }
@@ -279,7 +333,7 @@ def chunk_lines(
                         ),
                         "char_start": child_start_offset,
                         "char_end": child_end_offset,
-                        "token_count": None,
+                        "token_count": approx_tokens(child_text),
                         "safety_scope": None,
                         "source_class": source_class,
                     }
